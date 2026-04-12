@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hemotrace - Quiz Interactivo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === CONFIGURACIÓN GENERAL === */
+        :root {
+            --bg-white: #FFFFFF;
+            --text-dark: #0F172A;
+            --text-gray: #64748B;
+            --primary-blue: #334155;
+            --brand-red: #A0322E;
+            --accent-soft: #F8FAFC;
+            --success-color: #10B981;
+            --error-color: #EF4444;
+            --transition-curve: cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-white);
+            color: var(--text-dark);
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* === SISTEMA DE ESCENAS === */
+        #stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .scene {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease, visibility 0.8s;
+            z-index: 1;
+        }
+
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        /* === SCENE 1: PORTADA (HERO) === */
+        .hero-scene {
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-video-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.88);
+            z-index: 1;
+        }
+
+        .hero-billboard-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            max-width: 1400px;
+        }
+
+        .hero-logo-img {
+            height: 110px;
+            width: auto;
+            margin-bottom: 1.5rem;
+            mix-blend-mode: multiply;
+            object-fit: contain;
+        }
+
+        .hero-brand {
+            font-family: 'Poppins', sans-serif;
+            font-size: 8rem;
+            font-weight: 500;
+            letter-spacing: -3px;
+            line-height: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-brand .hemo { color: var(--brand-red); }
+        .hero-brand .trace { color: var(--text-dark); }
+
+        .hero-tagline {
+            font-size: 3.5rem;
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            letter-spacing: -1px;
+        }
+
+        .hero-subtagline {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--primary-blue);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 12px 0;
+            margin-bottom: 2rem;
+        }
+
+        .btn-play {
+            padding: 1.2rem 3.5rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+            background: var(--brand-red);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(160, 50, 46, 0.3);
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-play:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(160, 50, 46, 0.4);
+            background: #8b2b27;
+        }
+
+        /* === SCENE 2: QUIZ === */
+        .quiz-scene {
+            background: var(--accent-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bg-watermark {
+            position: absolute;
+            bottom: 5%;
+            right: 5%;
+            width: 40vw;
+            opacity: 0.04;
+            z-index: 0;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+
+        /* Botón Salir */
+        .btn-exit {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            background: white;
+            color: var(--text-dark);
+            border: 1px solid #E2E8F0;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .btn-exit:hover {
+            background: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+
+        /* Contenedor del Quiz (Sin fondo blanco) */
+        .quiz-container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 1400px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Texto dominio superior (Nuevo) */
+        .quiz-domain-logo {
+            position: absolute;
+            top: 1rem;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem; /* Tamaño mucho más grande */
+            font-weight: 300; /* Grosor fino */
+            letter-spacing: 1px;
+            z-index: 20;
+        }
+        .quiz-domain-logo .hemo {
+            color: var(--brand-red);
+        }
+        .quiz-domain-logo .trace {
+            color: var(--text-dark);
+        }
+
+        #quiz-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: center; /* Centrado vertical para todo el bloque */
+        }
+
+        /* Pregunta (Parte superior, grande y negrita) */
+        .quiz-question {
+            font-size: 3.5rem; /* Un poco más grande */
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.3;
+            text-align: center;
+            margin-bottom: 2.5rem; /* Acercado a las opciones */
+            letter-spacing: -1px;
+            padding: 0 2rem;
+        }
+
+        /* Opciones (Parte inferior, bloques/cuadrados) */
+        .quiz-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columnas para 3 opciones */
+            gap: 2rem;
+        }
+
+        .quiz-option {
+            background: white;
+            border: 2px solid #E2E8F0;
+            padding: 2rem;
+            border-radius: 20px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px; /* Aspecto cuadrado/bloque */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.02);
+        }
+
+        .quiz-option:hover:not(.disabled) {
+            border-color: var(--primary-blue);
+            background: #F8FAFC;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .quiz-option.disabled {
+            cursor: default;
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+            color: #065F46;
+        }
+
+        .quiz-option.incorrect {
+            border-color: var(--error-color);
+            background: rgba(239, 68, 68, 0.05);
+            color: #991B1B;
+            opacity: 0.5; /* Difumina un poco la incorrecta seleccionada */
+        }
+
+        /* === FEEDBACK OVERLAY (Superpuesto y Animado) === */
+        .feedback-overlay {
+            position: fixed; /* Posición fija para abarcar toda la pantalla fluidamente */
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(1.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .feedback-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        .feedback-title {
+            font-size: 5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .feedback-title.correct { color: var(--success-color); }
+        .feedback-title.incorrect { color: var(--error-color); }
+
+        .feedback-desc {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            margin-bottom: 4rem;
+            max-width: 900px;
+            line-height: 1.4;
+        }
+
+        .feedback-desc strong {
+            display: block;
+            margin-top: 15px;
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .btn-next-overlay {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 1.5rem 4rem;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .btn-next-overlay:hover { 
+            background: black; 
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+
+        /* Pantalla Final Quiz */
+        .quiz-end {
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .quiz-end h2 {
+            font-size: 4rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .quiz-end p {
+            font-size: 1.5rem;
+            color: var(--text-gray);
+            margin-bottom: 3rem;
+        }
+
+        /* Media queries para pantallas más pequeñas */
+        @media (max-width: 992px) {
+            .quiz-options { grid-template-columns: 1fr; gap: 1rem; }
+            .quiz-option { min-height: 120px; font-size: 1.1rem; padding: 1.5rem; }
+            .quiz-question { font-size: 2.2rem; margin-bottom: 1.5rem; }
+            .quiz-container { padding: 1rem; height: 90vh; }
+            .feedback-title { font-size: 3.5rem; }
+            .feedback-desc { font-size: 1.2rem; }
+            .feedback-desc strong { font-size: 1.5rem; }
+            .quiz-domain-logo { top: 0.5rem; font-size: 2rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="stage">
+        <div class="scene hero-scene active" id="scene-hero">
+            <video class="hero-video-bg" autoplay loop muted playsinline>
+                <source src="video1.mp4" type="video/mp4">
+            </video>
+            <div class="hero-overlay"></div>
+            
+            <div class="hero-billboard-content">
+                <img src="logo.png" alt="Hemotrace Logo" class="hero-logo-img">
+                <h1 class="hero-brand"><span class="hemo">hemo</span><span class="trace">trace</span></h1>
+                <h2 class="hero-tagline">Da vida a tus datos analíticos</h2>
+                <p class="hero-subtagline">Individualizamos resultados analíticos con IA</p>
+                
+                <button class="btn-play" onclick="startQuiz()">Jugar ahora</button>
+            </div>
+        </div>
+
+        <div class="scene quiz-scene" id="scene-quiz">
+            <img src="logo.png" alt="" class="bg-watermark">
+            
+            <button class="btn-exit" onclick="exitQuiz()">Salir ✕</button>
+            
+            <div class="quiz-container" id="quiz-box">
+                
+                <div class="quiz-domain-logo">
+                    <span class="hemo">hemo</span><span class="trace">trace.com</span>
+                </div>
+                
+                <div id="quiz-content">
+                    <h2 class="quiz-question" id="q-text">Cargando pregunta...</h2>
+                    
+                    <div class="quiz-options" id="q-options">
+                        </div>
+                </div>
+
+                <div class="quiz-end" id="quiz-end-screen">
+                    <h2>¡Quiz Completado!</h2>
+                    <p>Has llegado al final de todas las preguntas disponibles.</p>
+                    <button class="btn-play" onclick="startQuiz()">Jugar de nuevo</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feedback-overlay" id="feedback-overlay">
+            <h3 class="feedback-title" id="feedback-title">¡Correcto!</h3>
+            <p class="feedback-desc" id="feedback-desc">Has acertado la respuesta.</p>
+            <button class="btn-next-overlay" id="btn-next-overlay" onclick="nextQuestion()">Siguiente pregunta ➔</button>
+        </div>
+    </div>
+
+    <script>
+        // === BASE DE DATOS DE PREGUNTAS (50 PREGUNTAS) ===
+        const allQuestions = [
+            // BLOQUE 1 - Ciencia
+            { q: "¿Cómo se llama el análisis de sangre que mide el número y características de las células sanguíneas?", options: ["Hemograma", "Electrocardiograma", "Electroforesis"], correct: 0 },
+            { q: "¿Cuáles son los tres tipos principales de células que se analizan en un hemograma?", options: ["Glóbulos rojos, glóbulos blancos y plaquetas", "Neuronas, hepatocitos y adipocitos", "Eritrocitos, epitelios y cartílagos"], correct: 0 },
+            { q: "¿Cuál es la función principal de los glóbulos rojos?", options: ["Transportar oxígeno por el cuerpo", "Defendernos de infecciones", "Ayudar a la coagulación de la sangre"], correct: 0 },
+            { q: "¿Qué proteína da color rojo a la sangre y transporta el oxígeno?", options: ["Albúmina", "Hemoglobina", "Fibrinógeno"], correct: 1 },
+            { q: "¿Qué ocurre cuando el nivel de hemoglobina en sangre es más bajo de lo normal?", options: ["Hipertensión", "Leucemia", "Anemia"], correct: 2 },
+            { q: "¿Cuál es la función principal de los glóbulos blancos (leucocitos)?", options: ["Defender el organismo frente a infecciones y agentes extraños", "Transportar dióxido de carbono al pulmón", "Regular la presión arterial"], correct: 0 },
+            { q: "Un aumento muy elevado de glóbulos blancos en sangre puede ser señal de…", options: ["Un déficit de hierro", "Una infección activa o enfermedad hematológica", "Deshidratación severa"], correct: 1 },
+            { q: "¿Qué función tienen las plaquetas en la sangre?", options: ["Producir anticuerpos", "Transportar nutrientes", "Participar en la coagulación y detener hemorragias"], correct: 2 },
+            { q: "¿Cómo se llama el valor que indica el porcentaje del volumen sanguíneo ocupado por los glóbulos rojos?", options: ["Leucograma", "Hematocrito", "Índice de masa corporal"], correct: 1 },
+            { q: "¿Qué parámetro del hemograma indica el tamaño medio de los glóbulos rojos?", options: ["Volumen corpuscular medio (VCM)", "Plaquetas (PLT)", "Neutrófilos (NEU)"], correct: 0 },
+            { q: "¿Qué tipo de anemia se asocia a una deficiencia de hierro?", options: ["Anemia hemolítica", "Anemia perniciosa", "Anemia ferropénica"], correct: 2 },
+            { q: "La vitamina B12 y el ácido fólico son necesarios para…", options: ["Regular los niveles de glucosa en sangre", "La formación correcta de glóbulos rojos", "Sintetizar plaquetas en el hígado"], correct: 1 },
+            { q: "¿Qué es la médula ósea?", options: ["La capa protectora del cerebro", "Una glándula del sistema digestivo", "El tejido interior de los huesos donde se producen las células sanguíneas"], correct: 2 },
+            { q: "¿Cuál de estos parámetros mide la inflamación de forma inespecífica en una analítica?", options: ["Hematocrito", "Proteína C reactiva (PCR)", "Volumen plaquetario medio"], correct: 1 },
+            { q: "¿Qué es la ferritina?", options: ["Una enzima digestiva del páncreas", "Un tipo de glóbulo blanco", "Una proteína que almacena hierro en el organismo"], correct: 2 },
+            { q: "¿Cuál es la función del bazo en relación con la sangre?", options: ["Producir insulina", "Filtrar la sangre y eliminar glóbulos rojos envejecidos", "Absorber nutrientes del intestino"], correct: 1 },
+            { q: "Un recuento bajo de plaquetas se denomina…", options: ["Eritrocitosis", "Leucopenia", "Trombocitopenia"], correct: 2 },
+            { q: "¿Qué significa que un valor analítico esté 'fuera de rango de referencia'?", options: ["Que el análisis fue realizado incorrectamente", "Que el paciente tiene una enfermedad grave con certeza", "Que está por encima o por debajo de los valores normales para la población general"], correct: 2 },
+            { q: "¿Por qué pueden variar los valores 'normales' de un hemograma entre un hombre y una mujer?", options: ["Porque los laboratorios usan máquinas diferentes", "Por diferencias hormonales y fisiológicas, como la menstruación", "Por distintos ritmos circadianos"], correct: 1 },
+            { q: "¿Qué es la leucopenia?", options: ["Exceso de glóbulos rojos en circulación", "Aumento de plaquetas por encima del rango normal", "Disminución del número de glóbulos blancos en sangre"], correct: 2 },
+            { q: "¿Qué tipo de glóbulo blanco es el más abundante en personas sanas?", options: ["Basófilos", "Neutrófilos", "Linfocitos"], correct: 1 },
+            { q: "Los linfocitos son especialmente importantes porque…", options: ["Regulan la coagulación sanguínea", "Producen anticuerpos y coordinan la respuesta inmune específica", "Transportan el oxígeno a los tejidos"], correct: 1 },
+            { q: "¿Cuál de estos factores puede hacer que los glóbulos rojos estén elevados de forma fisiológica?", options: ["Seguir una dieta vegetariana", "Tener presión arterial alta", "Vivir a gran altitud"], correct: 2 },
+            { q: "¿Qué mide la velocidad de sedimentación globular (VSG)?", options: ["El número de glóbulos blancos por mililitro", "La rapidez con que los glóbulos rojos se depositan en un tubo, indicando inflamación", "La velocidad a la que la sangre circula por las arterias"], correct: 1 },
+            { q: "¿Qué es la eritropoyetina (EPO)?", options: ["Una proteína del plasma que coagula la sangre", "Una hormona producida por el riñón que estimula la formación de glóbulos rojos", "Un tipo de anticuerpo producido por los linfocitos"], correct: 1 },
+            { q: "¿Por qué es importante conocer la medicación habitual de un paciente al interpretar su hemograma?", options: ["Porque ciertos fármacos pueden alterar los valores analíticos", "Porque sin esa información el laboratorio no puede procesar la muestra", "Porque la medicación cambia el grupo sanguíneo del paciente"], correct: 0 },
+            { q: "¿Qué diferencia hay entre un análisis de sangre en ayunas y uno sin ayunas?", options: ["Sin ayunas, el hemograma no puede medirse con precisión", "El ayuno hace que los glóbulos rojos sean más grandes", "El ayuno afecta principalmente a parámetros como glucosa y lípidos, no tanto al hemograma"], correct: 2 },
+            { q: "¿Qué es la policitemia?", options: ["Una deficiencia grave de plaquetas", "Un aumento anormal del número de glóbulos rojos en sangre", "La ausencia total de glóbulos blancos"], correct: 1 },
+            { q: "¿Cuál de estas condiciones puede elevar los eosinófilos en un hemograma?", options: ["Hipertensión arterial", "Diabetes tipo 2", "Alergias o infecciones parasitarias"], correct: 2 },
+            { q: "¿Qué información aporta el índice neutrófilo-linfocito (INL) en un hemograma?", options: ["Indica el tiempo que tarda la sangre en coagularse", "Mide la concentración de hierro en los glóbulos rojos", "Es un marcador de estrés inmunológico e inflamación sistémica"], correct: 2 },
+            { q: "¿Por qué puede variar el hemograma de una misma persona en distintos momentos del día?", options: ["Porque los glóbulos rojos se reproducen solo por la noche", "Por variaciones circadianas y factores como el ejercicio, el estrés o la hidratación", "Porque la edad cambia los valores cada hora"], correct: 1 },
+            { q: "¿Qué es el plasma sanguíneo?", options: ["El conjunto de glóbulos rojos sin hemoglobina", "La capa de plaquetas en la superficie de un vaso dañado", "La parte líquida de la sangre que contiene proteínas, nutrientes y desechos"], correct: 2 },
+            { q: "¿Cuántos litros de sangre tiene aproximadamente un adulto de 70 kg?", options: ["Unos 2 litros", "Unos 5 litros", "Unos 10 litros"], correct: 1 },
+            { q: "¿Qué ocurre con el hemograma durante un embarazo?", options: ["El recuento de plaquetas sube siempre al doble", "La hemoglobina y el hematocrito bajan por hemodilución fisiológica", "Los glóbulos rojos aumentan mucho porque se necesita más oxígeno"], correct: 1 },
+            { q: "¿Qué es la trombocitosis?", options: ["La ausencia total de glóbulos rojos en circulación", "Una bajada brusca de glóbulos blancos", "Un aumento del número de plaquetas por encima del límite superior normal"], correct: 2 },
+            
+            // BLOQUE 2 - Hemotrace
+            { q: "¿Qué tipo de archivo debe subir el usuario para iniciar el análisis en hemotrace?", options: ["Una imagen JPG del informe", "Un archivo Excel con los valores numéricos", "Un PDF con los resultados analíticos"], correct: 2 },
+            { q: "Además del PDF analítico, ¿qué información adicional solicita hemotrace?", options: ["Solo el nombre y la fecha del análisis", "Únicamente el número de historia clínica", "Edad, sexo biológico, actividad física, patologías previas, medicación y suplementos"], correct: 2 },
+            { q: "¿Cuál es el principal resultado que genera hemotrace tras el análisis?", options: ["Una receta médica con medicamentos recomendados", "Un diagnóstico médico definitivo firmado por un médico", "Un informe PDF descargable con conclusiones en lenguaje comprensible"], correct: 2 },
+            { q: "¿Hemotrace sustituye al médico en la toma de decisiones clínicas?", options: ["No, actúa como apoyo al profesional sanitario, nunca como sustituto", "Solo lo sustituye en casos de urgencia", "Sí, puede diagnosticar enfermedades de forma autónoma"], correct: 0 },
+            { q: "¿Qué ventaja ofrece el chatbot de hemotrace frente al informe PDF?", options: ["Llama directamente al médico de cabecera del paciente", "Genera un segundo diagnóstico diferente al del informe", "Permite resolver dudas concretas de forma conversacional y está disponible 24/7"], correct: 2 },
+            { q: "¿Cómo protege hemotrace la privacidad de los datos del usuario?", options: ["No almacena los resultados analíticos ni requiere identificación real del usuario", "Comparte los datos con el médico de familia automáticamente", "Guarda los datos cifrados en la nube para futuras consultas"], correct: 0 },
+            { q: "¿Qué ventaja tiene hemotrace frente a consultar un hemograma con ChatGPT?", options: ["Tiene una interfaz más colorida y atractiva", "Responde más rápido a las preguntas del usuario", "Genera informes PDF descargables y ofrece razonamiento clínico personalizado"], correct: 2 },
+            { q: "¿Para qué tipo de usuario está pensado hemotrace?", options: ["Solo para médicos especialistas en hematología", "Tanto para profesionales sanitarios como para pacientes", "Exclusivamente para investigadores clínicos"], correct: 1 },
+            { q: "¿Qué ocurre con el historial clínico del usuario en hemotrace?", options: ["Se guarda automáticamente en la cuenta del usuario", "No se genera historial, ya que el análisis es anónimo y no se almacenan datos", "Se envía al centro de salud al que pertenece el paciente"], correct: 1 },
+            { q: "¿Qué problema del sistema sanitario busca aliviar hemotrace?", options: ["La escasez de fármacos en las farmacias", "La falta de médicos especializados en cirugía", "El escaso tiempo por consulta que dificulta el análisis exhaustivo del hemograma"], correct: 2 },
+            { q: "¿Cuál de estas frases resume mejor la propuesta de valor de hemotrace?", options: ["Almacenar el historial médico completo de cada paciente en la nube", "Transformar informes analíticos complejos en conclusiones claras y personalizadas", "Reemplazar al médico de cabecera con inteligencia artificial"], correct: 1 },
+            { q: "¿Qué hace hemotrace con los datos clínicos del paciente que el usuario introduce?", options: ["Los cruza con los resultados analíticos para personalizar las conclusiones", "Los envía a una base de datos pública de investigación", "Los usa solo para verificar la identidad del usuario"], correct: 0 },
+            { q: "¿En qué fase de desarrollo se encuentra actualmente hemotrace?", options: ["Solo es un concepto teórico sin desarrollo técnico", "MVP funcional: la plataforma existe y opera", "Producto comercial disponible en farmacias"], correct: 1 },
+            { q: "¿A qué perfil de cliente profesional está orientado el modelo de suscripción de hemotrace?", options: ["Abogados y asesores legales del sector salud", "Médicos y profesionales sanitarios", "Farmacéuticos de oficina de farmacia"], correct: 1 },
+            { q: "¿Qué barrera concreta elimina hemotrace para el paciente al recibir sus resultados?", options: ["La barrera económica del acceso a la sanidad pública", "La barrera técnica del lenguaje médico, presentando los resultados de forma comprensible", "La barrera geográfica de acceso a laboratorios clínicos"], correct: 1 }
+        ];
+
+        let quizQueue = [];
+        let currentQuestionObj = null;
+
+        // DOM Elements
+        const sceneHero = document.getElementById('scene-hero');
+        const sceneQuiz = document.getElementById('scene-quiz');
+        const quizContent = document.getElementById('quiz-content');
+        const quizEndScreen = document.getElementById('quiz-end-screen');
+        
+        const qText = document.getElementById('q-text');
+        const qOptions = document.getElementById('q-options');
+        
+        const feedbackOverlay = document.getElementById('feedback-overlay');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackDesc = document.getElementById('feedback-desc');
+
+        // Función para barajar el array de preguntas
+        function shuffleArray(array) {
+            let shuffled = array.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Iniciar Quiz
+        function startQuiz() {
+            sceneHero.classList.remove('active');
+            sceneQuiz.classList.add('active');
+            
+            quizContent.style.display = 'flex';
+            quizEndScreen.style.display = 'none';
+            feedbackOverlay.classList.remove('visible');
+
+            quizQueue = shuffleArray(allQuestions);
+            
+            loadNextQuestion();
+        }
+
+        // Cargar Pregunta
+        function loadNextQuestion() {
+            if (quizQueue.length === 0) {
+                endQuiz();
+                return;
+            }
+
+            // Ocultar overlay
+            feedbackOverlay.classList.remove('visible');
+
+            currentQuestionObj = quizQueue.pop();
+
+            // Limpiar opciones
+            qOptions.innerHTML = '';
+            
+            // Texto de la pregunta
+            qText.innerText = currentQuestionObj.q;
+
+            // Barajar las opciones pero manteniendo el track de cuál es la correcta
+            let optionsWithIndex = currentQuestionObj.options.map((opt, index) => {
+                return { text: opt, isCorrect: (index === currentQuestionObj.correct) };
+            });
+            
+            // Barajamos el orden en que aparecen las respuestas A, B, C
+            optionsWithIndex = shuffleArray(optionsWithIndex);
+
+            // Crear botones de opciones
+            optionsWithIndex.forEach((opt, renderIndex) => {
+                const btn = document.createElement('div');
+                btn.className = 'quiz-option';
+                
+                // Formato limpio con letra
+                const letter = String.fromCharCode(97 + renderIndex); 
+                btn.innerHTML = `<span><strong>${letter})</strong> ${opt.text}</span>`;
+                
+                btn.onclick = () => selectOption(btn, opt.isCorrect, optionsWithIndex);
+                qOptions.appendChild(btn);
+            });
+        }
+
+        // Seleccionar Opción
+        function selectOption(selectedBtn, isCorrect, allRenderedOptions) {
+            // Deshabilitar todos los botones
+            const buttons = qOptions.querySelectorAll('.quiz-option');
+            buttons.forEach(btn => btn.classList.add('disabled'));
+
+            // Buscar cuál era la respuesta correcta literal para mostrarla
+            const correctText = allRenderedOptions.find(o => o.isCorrect).text;
+
+            if (isCorrect) {
+                selectedBtn.classList.add('correct');
+                feedbackTitle.innerText = "¡Correcto!";
+                feedbackTitle.className = "feedback-title correct";
+                feedbackDesc.innerHTML = "Has acertado la respuesta.";
+            } else {
+                selectedBtn.classList.add('incorrect');
+                feedbackTitle.innerText = "¡Incorrecto!";
+                feedbackTitle.className = "feedback-title incorrect";
+                feedbackDesc.innerHTML = `La respuesta correcta era: <strong>${correctText}</strong>`;
+                
+                // Resaltar visualmente la correcta por debajo del overlay
+                buttons.forEach((btn, idx) => {
+                    if (allRenderedOptions[idx].isCorrect) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // Un pequeño retraso de medio segundo para que el usuario vea el color de su respuesta
+            // antes de que la gran pantalla de feedback caiga encima.
+            setTimeout(() => {
+                feedbackOverlay.classList.add('visible');
+            }, 500);
+        }
+
+        function nextQuestion() {
+            loadNextQuestion();
+        }
+
+        function endQuiz() {
+            quizContent.style.display = 'none';
+            feedbackOverlay.classList.remove('visible');
+            quizEndScreen.style.display = 'flex';
+        }
+
+        // Salir del Quiz y volver a la portada
+        function exitQuiz() {
+            sceneQuiz.classList.remove('active');
+            sceneHero.classList.add('active');
+        }
+
+    </script>
+</body>
+</html>
